@@ -1,8 +1,16 @@
 body {
+	margin: 0;
 	background-color: black;
 }
 
-#place {
+.screen {
+	display: none;
+	min-height: 100vh;
+	justify-content: center;
+	align-items: center;
+}
+
+#board {
 	background-color: black;
 	border-top: 1px solid white;
 	border-bottom: 1px solid white;
@@ -12,10 +20,53 @@ canvas {
     padding: 0;
     margin: auto;
     display: block;
-    height: 600px;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
 }
+
+.center {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center; 
+  align-items: center;    
+}
+.container {
+	box-sizing: border-box;
+	max-width: 800px;
+	width: 90%;
+	background-color: #000000;
+	padding: 2rem;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.question {
+	text-align: center;
+	font-size: 1.2rem;
+	margin-bottom: 1.5rem;
+	color: white;
+}
+.option-group {
+	display: flex;
+	gap: 1rem;
+	margin-bottom: 1.5rem;
+}
+.either-option {
+	flex: 1;
+	padding: 1.5rem;
+	border: none;
+	background: #f5f6fa;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #2d3436;
+	text-align: center;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.either-option:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+.either-option.selected {
+	background: white;
+	color: black;
+	transform: scale(1.05);
+}
+

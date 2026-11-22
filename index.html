@@ -2,12 +2,24 @@
 <html>
   <head>
 	<meta charset="UTF-8">
-	<meta name="viewport", content="width=device-width, initial-scale=1.0">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Retro Arcade</title>
 	<link rel="stylesheet" href="style.css">
 	<script src="index.js"></script>
   </head>
   <body>
-	<canvas id="place"></canvas>
+	<div class="center">
+	  <div class="container">
+		<!--ask only once. and only on reload ask again-->
+		<div class="question" id="question">How would you like to play?</div>
+		<div class="option-group" role="radiogroup">
+		  <div class="either-option" role="radio" tabindex="0" aria-checked="false"></div>
+		  <div class="either-option" role="radio" tabindex="0" aria-checked="false"></div>
+		</div>
+	  </div>
+	</div>
+	<div class="screen" id="screen">
+	  <canvas id="board"></canvas>
+	</div>
   </body>
 </html>
