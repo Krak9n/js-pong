@@ -2,11 +2,11 @@ const keys = {};
 // could be just array
 const game_mode = [{
 	a: "locally",
-	b: "online / with a friend (through sockets)"
+	b: "online"
 }];
 let board, context, finish = false, paused = false;
 let board_w = 500, board_h = 500;
-let player_w = Math.random()*(board_w/4-10)+10, player_h = Math.random()*(board_w/4-10)+10;
+let player_w = 10, player_h = 50;
 var audio = new Audio('beep.mp3');
 
 let p1 = {
@@ -127,11 +127,17 @@ function out_of_bounds(y) {
 	return (y < 0 || y + player_h > board_h);
 }
 
-function draw_round_rect(ctx, player, round_corner, color) {
+function draw_round_rect(ctx, player, round_corner, color ) {
 	ctx.fillStyle = color;
-	ctx.beginPath();
-	ctx.roundRect(player.x, player.y, player.width, player.height, round_corner);
-	ctx.fill();
+	ctx.fillRect(player.x, player.y, player.width, player.height);
+
+	ctx.fillStyle = "#087f75";
+	ctx.fillRect(player.x, player.y, 2, player.height);
+	ctx.fillRect(player.x + player.width - 2, player.y, 2, player.height);
+	
+	ctx.fillStyle = "#c8fff5";
+	ctx.fillRect(player.x + 3, player.y + 5, Math.max(1, player.width - 6), 5);
+	ctx.fillRect(player.x + 3, player.y + player.height - 10, Math.max(1, player.width - 6), 5);
 }
 
 function ball_position(ball, ctx, color) {
@@ -167,7 +173,7 @@ function frame_update() {
 	score_conditions(ball, p1, p2);
 
 	// redraw scores and center line
-	context.font = "45px Terminus";
+	context.font = "45px Courier New";
 	context.fillStyle = "grey";
 	context.fillText(p1.score, board_w / 5, board.height / 4);
 	context.fillText(p2.score, board_w * 4/5 - 45, board.height / 4);
