@@ -1,0 +1,11 @@
+- add some screen for when some player's score reaches 10
+- delay 3 seconds between each goal
+- improve ball physics
+- add sockets:
+  * one player starts as a server and the other one automatically connects to him
+  * peerjs for client-server side
+- css improvments
+- random dimension of every paddle (?)
+- pixel graphics
+
+The server side player should own the whole game state. 

@@ -1,10 +1,3 @@
-/*
-  - add some screen for when some player's score reaches 10
-  - delay 3 seconds between each goal
-  - improve ball physics
-  - add sockets: one player starts as a server and the other one automatically connects to him
-  - css improvments
-*/
 const keys = {};
 // could be just array
 const game_mode = [{
@@ -12,8 +5,8 @@ const game_mode = [{
 	b: "online / with a friend (through sockets)"
 }];
 let board, context, finish = false, paused = false;
-let player_w = 10, player_h = 50;
 let board_w = 500, board_h = 500;
+let player_w = Math.random()*(board_w/4-10)+10, player_h = Math.random()*(board_w/4-10)+10;
 var audio = new Audio('beep.mp3');
 
 let p1 = {
