@@ -1,25 +1,30 @@
 const keys = {};
+const PADDLE_SPEED = 360; 
+let lastTime = null, online_network_instance = null;
+const clamp = (value, min, max) => { 
+	return Math.max(min, Math.min(max, value));
+}
 // could be just array
 const game_mode = [{
 	a: "locally",
 	b: "online"
 }];
 let board, context, finish = false, paused = false;
-let board_w = 500, board_h = 500;
+let board_w = 900, board_h = 700;
 let player_w = 10, player_h = 50;
-var audio = new Audio('beep.mp3');
+var audio = new Audio('assets/beep.mp3');
 
 let p1 = {
 	x : 0,
-	y : board_h / 2,
+	y : (board_h - player_h) / 2,
 	width : player_w,
 	height : player_h,
 	velocity : 0,
 	score : 0
 }
 let p2 = {
-	x : 490,
-	y : board_h / 2,
+	x : board_w - 10,
+	y : (board_h - player_h) / 2,
 	width : player_w,
 	height : player_h,
 	velocity : 0,
@@ -31,8 +36,8 @@ let ball = {
 	y : board_h / 2,
 	width : ball_w,
 	height : ball_h,
-	velocity_x : (Math.random() > 0.5 ? 1 : -1) * 2,
-	velocity_y : (Math.random() * 6 - 3)
+	velocity_x : 360,
+	velocity_y : (Math.random() * 240 - 120)
 }
 
 // initial
@@ -41,19 +46,30 @@ function play_locally() {
 	board.height = board_h;
 	board.width = board_w;
 	context = board.getContext("2d");
-	// initial render
-	draw_round_rect(context, p1, 0, "white");
-	draw_round_rect(context, p2, 0, "white");
-
-	// keys listen
-	document.addEventListener("keydown", (e) => {
-		if (e.key === "ArrowUp" || e.key === "ArrowDown") e.preventDefault();
-		keys[e.key] = true;
-	});
-	document.addEventListener("keyup", (e) => { keys[e.key] = false; });
-	move_player(p1, p2);
+	randomize_ball_velocity(ball);
 	requestAnimationFrame(frame_update);
 }
+
+function play_online() {
+	if (online_network_instance) return;
+	online_network_instance = new PeerNetwork(
+		"carlo-alberto-lobby",
+		(data) => {
+			console.log("Received from other player", data);
+		},
+		(status) => {
+			console.log(status);
+		}
+	)
+	online_network_instance.start();
+}
+
+// keys listen
+document.addEventListener("keydown", (e) => {
+	if (e.key === "ArrowUp" || e.key === "ArrowDown") e.preventDefault();
+	keys[e.key] = true;
+});
+document.addEventListener("keyup", (e) => { keys[e.key] = false; });
 
 document.addEventListener('DOMContentLoaded', function() {
 	const options = document.querySelectorAll('.either-option');
@@ -94,6 +110,14 @@ function handle_selection(event) {
 		const gm = document.getElementById("screen");
 		gm.style.display = "flex";
 		play_locally();
+	}
+	else if (selected.textContent.trim() === game_mode[0].b) {
+		// hide the selector
+		document.querySelector(".center").style.display = "none";
+		
+		const gm = document.getElementById("screen");
+		gm.style.display = "flex";
+		play_online();
 	}
 }
 
@@ -140,37 +164,47 @@ function draw_round_rect(ctx, player, round_corner, color ) {
 	ctx.fillRect(player.x + 3, player.y + player.height - 10, Math.max(1, player.width - 6), 5);
 }
 
-function ball_position(ball, ctx, color) {
-	context.fillStyle = color;
-	ball.x += ball.velocity_x;
-	ball.y += ball.velocity_y;
-	context.fillRect(ball.x, ball.y, ball.width, ball.height);
+function draw_ball(ball, ctx, color) {
+	ctx.fillStyle = color;
+	ctx.fillRect(ball.x, ball.y, ball.width, ball.height);
 }
 
-function frame_update() {
+function update_ball(ball, dt) {
+	ball.x += ball.velocity_x * dt;
+	ball.y += ball.velocity_y * dt;
+}
+
+function frame_update(current_time) {
+	// recalculate for each new frame
+	const dt = lastTime === null ? 0 : Math.min((current_time - lastTime) / 1000, 0.03);
+	lastTime = current_time;
 	context.clearRect(0, 0, board.width + 20, board.height);
-	move_player(p1, p2);
+	move_player(p1, p2, dt);
 	// fix this velocity logic
-	let _y1 = p1.y + p1.velocity;
-	if (!out_of_bounds(_y1)) p1.y = _y1;
 	draw_round_rect(context, p1, 0, "white");
-	let _y2 = p2.y + p2.velocity;
-	if (!out_of_bounds(_y2)) p2.y = _y2;
 	draw_round_rect(context, p2, 0, "white");
 
-	ball_position(ball, context, "white");
-	if (ball.y <= 0 || ball.y + ball.height > board_h) ball.velocity_y *= -1;
+	update_ball(ball, dt);
+	if (ball.y < 0) { 
+		ball.y = 0;
+		ball.velocity_y = Math.abs(ball.velocity_y);
+	} else if (ball.y + ball.height > board_h) {
+		ball.y = board_h - ball.height;
+		ball.velocity_y = -Math.abs(ball.velocity_y); // reverse
+	}
+
+	// collisions
 	if (ball.velocity_x < 0 && detect_collision(ball, p1)) {
-		audio.play();
-		if (ball.x <= p1.x + p1.width) ball.velocity_x *= -1;
-		else if (ball.y <= p1.y) ball.velocity_y *= -1;
-	}
-	else if (ball.velocity_x > 0 && detect_collision(ball, p2)) {
-		audio.play();
-		if (p2.x <= ball.x + ball.width) ball.velocity_x *= -1;
-		else if (ball.y <= p2.y) ball.velocity_y *= -1;
-	}
+		ball.x = p1.x + p1.width;
+		randomize_ball_velocity(ball, 1);
+		audio.play().catch(() => {});
+	} else if (ball.velocity_x > 0 && detect_collision(ball, p2)) {
+		ball.x = p2.x - ball.width;
+		randomize_ball_velocity(ball, -1);
+		audio.play().catch(() => {});
+	} 
 	score_conditions(ball, p1, p2);
+	draw_ball(ball, context, "white");
 
 	// redraw scores and center line
 	context.font = "45px Courier New";
@@ -205,28 +239,27 @@ function score_conditions(ball, p1, p2) {
 function reset() {
 	ball = {
 		x : board_w / 2,
-		y : board_h / 2,
+		y : (board_h - player_h) / 2,
 		width : ball_w,
 		height : ball_h,
-		velocity_x : (Math.random() > 0.5 ? 1 : -1) * 2,
-		velocity_y : (Math.random() * 6 - 3), // holy angle
 	}
 	p1 = {
 		x : 0,
-		y : board_h / 2,
+		y : (board_h - player_h) / 2,
 		width : player_w,
 		height : player_h,
 		velocity : 0,
 		score : p1.score
 	}
 	p2 = {
-		x : 490,
+		x : board_w - 10,
 		y : board_h / 2,
 		width : player_w,
 		height : player_h,
 		velocity : 0,
 		score : p2.score
 	}
+	randomize_ball_velocity(ball);
 }
 
 function detect_collision(a, b) {
@@ -235,10 +268,22 @@ function detect_collision(a, b) {
 		a.y < b.y + b.height &&
 		a.y + a.height > b.y;
 }
+// some slop
+function randomize_ball_velocity(ball, direction = Math.random() < 0.5 ? -1 : 1) {
+	const speed = 300 + Math.random() * 250; // 300–550 px/s
+	const angle = (Math.random() * 2 - 1) * 0.9; // varied angle, about ±52°
 
-function move_player(p1, p2) {
-	if (keys.w || keys.W) p1.y = Math.max(0, p1.y - 5); // ?
-	if (keys.s || keys.S) p1.y = Math.min(board.height - p1.height, p1.y + 5);
-	if (keys.ArrowUp) p2.y = Math.max(0, p2.y - 5);
-	if (keys.ArrowDown) p2.y = Math.min(board.height - p2.height, p2.y + 5);
+	ball.velocity_x = direction * speed * Math.cos(angle);
+	ball.velocity_y = speed * Math.sin(angle);
+}
+
+function move_player(p1, p2, dt) {
+	const p1_direction = (keys.w || keys.W ? -1 : 0) + (keys.s || keys.S ? 1 : 0);
+	const p2_direction = (keys.ArrowUp ? -1 : 0) + (keys.ArrowDown ? 1 : 0);
+
+	p1.velocity = p1_direction * PADDLE_SPEED;
+	p2.velocity = p2_direction * PADDLE_SPEED;
+
+	p1.y = clamp(p1.y + p1.velocity * dt, 0, board.height - p1.height);
+	p2.y = clamp(p2.y + p2.velocity * dt, 0, board.height - p2.height);
 }
