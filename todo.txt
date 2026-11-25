@@ -1,6 +1,6 @@
-- add some screen for when some player's score reaches 10
-- delay 3 seconds between each goal
-- improve ball physics
+- add some screen for when some player's score reaches 10 [expected to have timer of some sort]
+- delay 3 seconds between each goal [timer]
+- improve ball physics [in work. partially done]
 - add sockets:
   * one player starts as a server and the other one automatically connects to him
   * peerjs for client-server side
@@ -9,3 +9,14 @@
 - pixel graphics
 
 The server side player should own the whole game state. 
+24.11.2026
+- improve server and client communication, more detailed logs 
+- insert the possibility to insert names
+- add some background music:
+  + one background
+  + fade on when the hard timer starts
+- concentration on the screen during the hard battle + music speed-up
+- improve visuals: timer 3 seconds between rounds
+- some text gets printed each new time
+- leave space for editors on each side, for now leave as is
+- add final screen
